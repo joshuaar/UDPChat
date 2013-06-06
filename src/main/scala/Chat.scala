@@ -9,8 +9,6 @@ import java.net.InetAddress
 
 abstract class msg
 case class MESSAGE(from:String,msg:String) extends msg
-case class SUCCESS extends msg
-case class STOP extends msg
 case class LISTEN extends msg
 case class PUNCH(ip:InetAddress)
 case class SEND(data:String,ip:InetAddress,port:Int)
@@ -49,9 +47,9 @@ class UDPListener(socket:udp) extends Actor {
   val sock = socket
   def receive = {
     case LISTEN => {
-      println("Listening")
+      //println("Listening")
       sender ! PACKET(sock.listen())
-      println("Got and sent")
+      //println("Got and sent")
       }
   }
 }
@@ -75,9 +73,9 @@ class UDPActor(socket:udp,printer:ActorRef) extends Actor {
     
     //Got a request to send a packet somewhere
     case SEND(data,ip,port) => {
-      println("Sending")
+      //println("Sending")
       socket.send(data.getBytes,ip,port)
-      println("Done sending")
+      //println("Done sending")
       }
     
     //Spray packets at a remote host to punch hole in local NAT
@@ -97,21 +95,13 @@ class MsgPrinter extends Actor {
   }
 }
 
-class MsgSender(printer:ActorRef) extends Actor {
-  while(true){
-	  Thread.sleep(1000)
-	  printer ! MESSAGE("Gremlin","Im an actor")
-  }
-  def receive = {
-    case STOP => 
-      self ! PoisonPill
-  }
-}
-
 object Main extends App{
-  println("Starting")
-  val pt = 6005
-  val lh = InetAddress.getByName("localhost")
+  
+  
+  val pt = args(1).toInt
+  val lh = InetAddress.getByName(args(0))
+  
+  println(s"Connecting to $lh on port $pt")
   val sock = new udp(pt)
   val system = ActorSystem("ChatSystem")
   val printer = system.actorOf(Props[MsgPrinter], name = "printer")
@@ -121,6 +111,4 @@ object Main extends App{
   while(true){
     sender ! SEND(readLine,lh,pt)
   }
-  
-
 }
