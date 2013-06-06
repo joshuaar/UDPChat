@@ -8,7 +8,7 @@ import java.net.SocketException
 import java.net.InetAddress
 
 abstract class msg
-case class MESSAGE(from:String,msg:String) extends msg
+case class MESSAGE(msg:String) extends msg
 case class LISTEN extends msg
 case class PUNCH(ip:InetAddress)
 case class SEND(data:String,ip:InetAddress,port:Int)
@@ -68,7 +68,7 @@ class UDPActor(socket:udp,printer:ActorRef) extends Actor {
     //Got a packet from the listener
     case PACKET(data) => {
       listener ! LISTEN
-      printer ! new MESSAGE("default",new String(data.getData))
+      printer ! new MESSAGE(new String(data.getData))
       }
     
     //Got a request to send a packet somewhere
@@ -90,8 +90,8 @@ class UDPActor(socket:udp,printer:ActorRef) extends Actor {
 //Print messages to the screen
 class MsgPrinter extends Actor {
   def receive = {
-    case MESSAGE(from,msg) =>
-      println(from+": "+msg)
+    case MESSAGE(msg) =>
+      println(msg)
   }
 }
 
@@ -100,7 +100,7 @@ object Main extends App{
   
   val pt = args(1).toInt
   val lh = InetAddress.getByName(args(0))
-  
+  val name = args(2)
   println(s"Connecting to $lh on port $pt")
   val sock = new udp(pt)
   val system = ActorSystem("ChatSystem")
@@ -109,6 +109,6 @@ object Main extends App{
   println("Looping")
   sender ! PUNCH(lh)
   while(true){
-    sender ! SEND(readLine,lh,pt)
+    sender ! SEND(name+": "+readLine,lh,pt)
   }
 }
