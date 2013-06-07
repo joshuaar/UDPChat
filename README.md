@@ -13,6 +13,7 @@ This is a simple chat client over UDP. It uses the principal known as UDP hole p
 4. Pick a port (e.g 6004)
 5. Execute the jar as follows:
 ```java -jar UDPChat.jar RemoteIP Port Name```
+
 RemoteIP: The remote IP address
 Port: The port number you want to connect on
 Name: The name you want to appear by your chat text
