@@ -12,6 +12,7 @@ This is a simple chat client over UDP. It uses the principal known as UDP hole p
 3. Exchange IP address information with the friend (type my ip into google)
 4. Pick a port (e.g 6004)
 5. Execute the jar as follows:
+
 ```java -jar UDPChat.jar RemoteIP Port Name```
 
 RemoteIP: The remote IP address
