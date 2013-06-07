@@ -22,5 +22,8 @@ Port: The port number you want to connect on
 Name: The name you want to appear by your chat text
 
 ##Details
-This uses UDP hole punching to get through any NATs you and your friend may be behind. Normally you would discover
+This uses UDP hole punching to get through "most" NATs you and your friend may be behind. Normally you would discover
 eachother's IP addresses through some external server, but in this simple example we just exchange that information manually.
+
+This only works on certain NATs. Consider the flow chart below. Communication is only possible on the green and yellow boxes.
+![STUN flowchart](http://en.wikipedia.org/wiki/File:STUN_Algorithm4.svg)
