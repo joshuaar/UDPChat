@@ -90,22 +90,22 @@ class MsgPrinter extends Actor {
   }
 }
 
-object Main extends App{
-  
-  if(args.length != 3){
-    println("Wrong number of arguments")
-    exit(1)
-  }
-  val pt = args(1).toInt
-  val lh = InetAddress.getByName(args(0))
-  val name = args(2)
-  println(s"Connecting to $lh on port $pt")
-  val sock = new udp(pt)
-  val system = ActorSystem("ChatSystem")
-  val printer = system.actorOf(Props[MsgPrinter], name = "printer")
-  val sender = system.actorOf(Props(new UDPActor(sock,printer)), name = "sender")
-  sender ! PUNCH(lh)
-  while(true){
-    sender ! SEND(name+": "+readLine,lh,pt)
-  }
-}
+//object Main extends App{
+//  
+//  if(args.length != 3){
+//    println("Wrong number of arguments")
+//    exit(1)
+//  }
+//  val pt = args(1).toInt
+//  val lh = InetAddress.getByName(args(0))
+//  val name = args(2)
+//  println(s"Connecting to $lh on port $pt")
+//  val sock = new udp(pt)
+//  val system = ActorSystem("ChatSystem")
+//  val printer = system.actorOf(Props[MsgPrinter], name = "printer")
+//  val sender = system.actorOf(Props(new UDPActor(sock,printer)), name = "sender")
+//  sender ! PUNCH(lh)
+//  while(true){
+//    sender ! SEND(name+": "+readLine,lh,pt)
+//  }
+//}
