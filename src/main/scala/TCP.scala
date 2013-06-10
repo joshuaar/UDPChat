@@ -4,6 +4,10 @@ import net.rudp._
 import java.net._
 import akka.actor._
 import java.io._
+import scala.concurrent.Await
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
 
 object wireCodes {
   val FT_MODE = "$f"//Send this to request client gets ready for a file
@@ -61,9 +65,6 @@ class rudpListener(s:ReliableSocket,parent:ActorRef) extends Actor{
       become(cmdListen)
       self ! LISTEN
     }
-    case FILELISTEN(file) =>
-      in.close()
-      become(fileListen)
   }
   
   def cmdListen:Receive = {
@@ -72,30 +73,23 @@ class rudpListener(s:ReliableSocket,parent:ActorRef) extends Actor{
       println("Listener Online")
       val data = in.readLine()
       println("Read something")
-      data match {
-        
-        case wireCodes.FT_MODE => { //Must receive file transfer mode request from remote
-          in.close() //Close the current line reader
-          become(fileListen) //Go into file listening mode
-          parent ! wireCodes.FT_RDY //Notify Parent of mode change
-        }
-        
-        case s:String => {
-          println("I read a string")
-          parent ! RECVDMESSAGE(s) //Send command to parent if it is unknown
-          println("Sent the string to the UDP actor")
-          self ! LISTEN //Repeat listening
-        }
-        
-      }//End match
+      parent ! RECVDMESSAGE(data) //Send command to parent if it is unknown
+      println("Sent the string to the UDP actor")
+      self ! LISTEN //Repeat listening
+    }
+    case f:FILELISTEN => {
+      in.close()
+      become(fileListen)
+      parent ! FILERCVREADY
+      self ! f // Ready to receive file
     }
   }
   
   def fileListen:Receive = {
     
     case LISTEN => {
-      println("Invalid, Cannot Listen for Wire Commands during file transfer")
-      //sender ! INVALIDCOMMAND("Cannot listen for commands during file transfer")
+      println("exiting listening mode without expected file")
+      become(cmdListen)
     }
     
     case FILELISTEN(file) => {//Listen for files
@@ -168,13 +162,20 @@ class rudpActor(lp:Int) extends Actor{
     case RECVDMESSAGE(s) => {
       println("I got a message on the wire!: "+s)
     }
-    case wireCodes.FT_RDY => {
-      //Send the remote a signal that files are ready to be sent
+    case FILERCVREADY => {
+      senderListener.sender ! SENDMESSAGE(wireCodes.FT_RDY)
+      println("Told remote that local is ready to accept file")
     }
     case m:SENDMESSAGE => {
       println("outer sending message")
       senderListener.sender ! m
       println("outer sent")
+    }
+    case f:SENDFILE => {
+      implicit val timeout = Timeout(5 seconds)
+      val request = senderListener.sender ? SENDFILEREQ //Notify the remote our wishes to send a file
+      Await.result(request, timeout.duration).asInstanceOf[String]
+      dasafdgG
     }
   }
 }

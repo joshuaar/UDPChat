@@ -15,6 +15,7 @@ case class SEND(data:String,ip:InetAddress,port:Int)
 case class PACKET(data:DatagramPacket)
 case class CONNECT(remoteHost:String, remotePort:Int)
 case class FILELISTEN(f:File)//Get file
+case class FILERCVREADY // File ready to be received
 case class SENDFILE(f:File)//Send file
 case class SENDFILEREQ//Request send file
 case class FILEDOWNLOADED(f:File)
