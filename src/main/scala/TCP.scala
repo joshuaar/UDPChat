@@ -6,20 +6,56 @@ import akka.actor._
 import java.io._
 
 object wireCodes {
-  val FT_MODE = "$f"
-  val FT_RDY = "$r"
+  val FT_MODE = "$f"//Send this to request client gets ready for a file
+  val FT_RDY = "$r" //Send this to host when ready for file
   val CMD_MODE = "$c"
 }
 
+//Sends messages and files to remote
 class rudpSender(s:ReliableSocket,parent:ActorRef) extends Actor{
+  import context._
   var out = new PrintWriter(s.getOutputStream(), true);
-  //Write the sending code here
+  def receive = {
+    case SENDMESSAGE(m) => {
+      println("inner send message")
+      out.println(m)
+      println("inner sent")
+    }
+    case SENDFILEREQ => {
+      out.println(wireCodes.FT_MODE)
+    }
+    case SENDFILE(f) =>
+      become(fileSend)
+      out.close()
+      self ! SENDFILE(f)
+  }
+  def fileSend: Receive = {
+    case SENDFILE(f) => {
+      val buffer = new Array[Byte](2048)
+      val fileIn = new FileInputStream(f)
+      val fileOut = new BufferedOutputStream(s.getOutputStream())
+      var len = fileIn.read(buffer)
+      while(len != -1) {
+        fileOut.write(buffer, 0,len)
+        len = fileIn.read(buffer)
+      }
+      val fileName = f.getName()
+      val host = s.getInetAddress().getHostName()
+      println(s"File $fileName sent successfully to $host")
+      out = new PrintWriter(s.getOutputStream(), true);
+      unbecome()
+    }
+    case _ => {
+      sender ! INVALIDCOMMAND("Cannot send commands during file transfer")
+    }
+  }
 }
 
+//Listens for messages and files from remote
 class rudpListener(s:ReliableSocket,parent:ActorRef) extends Actor{
   import context._
   var in = new BufferedReader(new InputStreamReader(s.getInputStream()))
-  
+  self ! LISTEN
   def receive = {
     case LISTEN => {
       become(cmdListen)
@@ -33,9 +69,9 @@ class rudpListener(s:ReliableSocket,parent:ActorRef) extends Actor{
   def cmdListen:Receive = {
     //Listens for lines of strings
     case LISTEN => {
+      println("Listener Online")
       val data = in.readLine()
-      println(data)
-      
+      println("Read something")
       data match {
         
         case wireCodes.FT_MODE => { //Must receive file transfer mode request from remote
@@ -45,7 +81,9 @@ class rudpListener(s:ReliableSocket,parent:ActorRef) extends Actor{
         }
         
         case s:String => {
-          parent ! REMOTEMESSAGE(s) //Send command to parent if it is unknown
+          println("I read a string")
+          parent ! RECVDMESSAGE(s) //Send command to parent if it is unknown
+          println("Sent the string to the UDP actor")
           self ! LISTEN //Repeat listening
         }
         
@@ -86,17 +124,24 @@ class rudpListener(s:ReliableSocket,parent:ActorRef) extends Actor{
   }
 }
 
+class SenderListenerPair(initsender:ActorRef,initlistener:ActorRef) {
+  val sender = initsender
+  val listener = initlistener
+}
 /**
  * Starts listening on a given port
  */
 class rudpActor(lp:Int) extends Actor{
   val localPort = lp
   val localHost = InetAddress.getLocalHost()
+  var senderListener = null.asInstanceOf[SenderListenerPair]
+  
   import context._
-
+  
   def receive = {
     
     case LISTEN => {
+      println(s"Listening on $localPort")
       val serverSocket = new ReliableServerSocket(localPort)
       self ! serverSocket.accept()
       }
@@ -110,17 +155,26 @@ class rudpActor(lp:Int) extends Actor{
     case s:ReliableSocket => {
       val hostName = s.getInetAddress().getCanonicalHostName()
       val port = s.getPort()
-      println(s"connected to $hostName on remote port $port")
-      val sock = actorOf(Props(new rudpListener(s,self)), name="sock")
+      val listen = actorOf(Props(new rudpListener(s,self)), name="listen")
+      val send = actorOf(Props(new rudpSender(s,self)), name="send")
+      senderListener = new SenderListenerPair(send,listen)
       become(connected)
+      println(s"connected to $hostName on remote port $port")
+
       }
   }
+  
   def connected:Receive = {
-    case REMOTEMESSAGE(s) => {
-      println(s)
+    case RECVDMESSAGE(s) => {
+      println("I got a message on the wire!: "+s)
     }
     case wireCodes.FT_RDY => {
       //Send the remote a signal that files are ready to be sent
+    }
+    case m:SENDMESSAGE => {
+      println("outer sending message")
+      senderListener.sender ! m
+      println("outer sent")
     }
   }
 }
@@ -134,7 +188,12 @@ object rudp extends App {
   Thread.sleep(500)
   println("Attempting connection")
   cli ! CONNECT("localhost",6004)
-  
+  println("Testing Message sending")
+  Thread.sleep(1000)
+  while(true){
+    cli ! SENDMESSAGE(readLine)
+    serv ! SENDMESSAGE(readLine)
+  }
   
   
 }
