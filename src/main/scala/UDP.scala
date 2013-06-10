@@ -74,9 +74,9 @@ class UDPActor(socket:udp,printer:ActorRef) extends Actor {
       }
     
     //Spray packets at a remote host to punch hole in local NAT
-    case PUNCH(ip) => {
+    case PUNCH(ip,port) => {
       for(i <- 1 to retransmit) {
-        self ! SEND("HP_REQ",ip,socket.port)
+        self ! SEND("HP_REQ",ip,port)
       }
     }//end case PUNCH
   }
