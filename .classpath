@@ -6,5 +6,6 @@
 	<classpathentry kind="lib" path="/usr/local/share/scala-2.10.1/lib/akka-actors.jar"/>
 	<classpathentry kind="lib" path="/usr/share/scala/lib/akka-actors.jar"/>
 	<classpathentry kind="lib" path="/home/josh/projects/UDPChat/lib/rudp-1.2.3.jar"/>
+	<classpathentry kind="lib" path="/home/josh/UDPChat/lib/rudp-1.2.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
