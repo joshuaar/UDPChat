@@ -29,7 +29,7 @@ object wireCodes {
         len = in.read(buf)
         while (len != -1) {
             out.write(buf, 0, len);
-            println(s"Sent $len bytes")
+            //println(s"Sent $len bytes")
             len = in.read(buf)
         }
     }
@@ -111,7 +111,7 @@ class fileListener(lp:Int,destination:String) extends Actor{
       println("Started file receiving")
       var len = fileIn.read(buffer)
       while(len != -1) {
-        println(s"Got $len bytes")
+        //println(s"Got $len bytes")
         fileOut.write(buffer,0,len)
         len = fileIn.read(buffer)
       }
@@ -205,8 +205,11 @@ class rudpActor(lp:Int) extends Actor{
     }
     
     case SEND(resource,host,port) => { //got a request from remote for resource
+      val lPort = wireCodes.getLocalPort()
+      //Hole punch code goes here
+      //
       println("Got request from remote for a resource")
-      val fileSender = context.actorOf(Props(new fileSender(resource,host,port,localHost,6009)))
+      val fileSender = context.actorOf(Props(new fileSender(resource,host,port,localHost,lPort)))
     }
   }
 }
@@ -229,5 +232,6 @@ object rudp extends App {
   
   //Test file request
   cli ! GET("/home/josh/UDPChat/jars/UDPChat.jar","/home/josh/test2")//GET(remoteLocation,localLocation)
+  serv ! GET("/home/josh/UDPChat/jars/UDPChat.jar","/home/josh/test3")
   
 }
