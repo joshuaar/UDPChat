@@ -24,11 +24,13 @@ object wireCodes {
     return port
   }
   def copy(in:InputStream, out:OutputStream) {
-        val buf = new Array[Byte](2048)
+        val buf = new Array[Byte](8192)
         var len = 0;
         len = in.read(buf)
+        var written = 0
         while (len != -1) {
-            out.write(buf, 0, len);
+            out.write(buf, 0, len)
+            written+=len
             //println(s"Sent $len bytes")
             len = in.read(buf)
         }
@@ -100,21 +102,17 @@ class fileListener(lp:Int,destination:String) extends Actor{
       self ! PoisonPill // kill
       }
     }
-  
+  //READ FILES FROM SOCKETS
   def receive = {
     case s:ReliableSocket => {
       println("File getter is connected")
-      val buffer = new Array[Byte](2048)
+      Thread.sleep(500)
+      val buffer = new Array[Byte](100)
       val f = new File(destination)
       val fileOut = new FileOutputStream(f)
       val fileIn = s.getInputStream()
       println("Started file receiving")
-      var len = fileIn.read(buffer)
-      while(len != -1) {
-        //println(s"Got $len bytes")
-        fileOut.write(buffer,0,len)
-        len = fileIn.read(buffer)
-      }
+      wireCodes.copy(fileIn,fileOut)
       s.close()
       fileOut.close()
       println("Finished file reception")
@@ -128,8 +126,11 @@ class fileSender(filePath:String,host:String,port:Int,localHost:InetAddress,loca
   val sock = new ReliableSocket(host,port,localHost,localPort)
   println("file sender is connected")
   self ! sock
+  
+  //WRITE FILES TO SOCKETS
   def receive = {
     case s:ReliableSocket => {
+      Thread.sleep(500)
       val buffer = new Array[Byte](2048)
       val f = new File(filePath)
       val fileIn = new FileInputStream(f)
@@ -231,7 +232,7 @@ object rudp extends App {
   serv ! SENDMESSAGE("Message2")
   
   //Test file request
-  cli ! GET("/home/josh/UDPChat/jars/UDPChat.jar","/home/josh/test2")//GET(remoteLocation,localLocation)
-  serv ! GET("/home/josh/UDPChat/jars/UDPChat.jar","/home/josh/test3")
+  cli ! GET("/home/josh/UDPChat/jars/UDPChat.jar","/home/josh/test2")
+  serv ! GET("/home/josh/CIM/Research/labdata/jaricher/newDecipher/Data for Database/Array Results/First Chip Disease Dataset/llnl.csv","/home/josh/test3")
   
 }
