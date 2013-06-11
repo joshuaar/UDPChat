@@ -4,7 +4,8 @@ UDPChat
 command line P2P chat over UDP
 
 ## Description
-This is a simple chat client over UDP. It uses the principal known as UDP hole punching to get past NATs.
+This is simple P2P over UDP. It uses the principal known as UDP hole punching to get past NATs.
+It also demonstrates Akka Actors.
 
 ##Usage
 1. Find the jar file in /jar
