@@ -23,7 +23,8 @@ Port: The port number you want to connect on
 Name: The name you want to appear by your chat text
 
 ##Details
-This uses UDP hole punching to get through "most" NATs you and your friend may be behind. Normally you would discover
-eachother's IP addresses through some external server, but in this simple example we just exchange that information manually.
+This uses UDP hole punching to get through "most" NATs you and your friend may be behind. Normally you would discover peers
+(i.e. IP/Port info) through some external STUN type server, 
+but in this simple example we just exchange that information manually.
 
-This was an experiment that let to other projects with distributed file sharing. Check out RUDP_Share for more info.
+This was an experiment that led to other projects with distributed file sharing. Check out RUDP_Share for more info.
